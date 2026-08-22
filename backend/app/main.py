@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.connectors import burp_import, nmap_scan
+from app.connectors import burp_import, nikto_scan, nmap_scan, sqlmap_scan
 from app.core.config import PROJECT_ROOT, get_settings, hash_api_key
 from app.core.database import get_db, init_db
 from app.models.asset import Asset, Subdomain
@@ -87,13 +87,7 @@ def create_app() -> FastAPI:
             "service": settings.app_name,
             "version": settings.app_version,
             "demo_mode": settings.demo_mode,
-            "connectors": {
-                "crtsh": True,
-                "dns": True,
-                "wappalyzer": True,
-                "shodan": settings.shodan_enabled,
-                "nmap": nmap_scan.nmap_available(),
-            },
+            "connectors": _connector_availability(),
         }
 
     @app.get("/stats", response_model=PlatformStats)
@@ -107,13 +101,7 @@ def create_app() -> FastAPI:
             total_subdomains=total_subdomains,
             total_findings=total_findings,
             findings_by_severity={severity: count for severity, count in rows},
-            connectors_available={
-                "crtsh": True,
-                "dns": True,
-                "wappalyzer": True,
-                "shodan": settings.shodan_enabled,
-                "nmap": nmap_scan.nmap_available(),
-            },
+            connectors_available=_connector_availability(),
         )
 
     @app.post("/assets", response_model=AssetResponse, status_code=201)
@@ -122,7 +110,11 @@ def create_app() -> FastAPI:
         existing = db.scalar(select(Asset).where(Asset.root_domain == root_domain))
         if existing:
             raise HTTPException(status_code=409, detail="Asset already tracked")
-        asset = Asset(root_domain=root_domain, label=payload.label)
+        asset = Asset(
+            root_domain=root_domain,
+            label=payload.label,
+            authorized_for_active_testing=payload.authorized_for_active_testing,
+        )
         db.add(asset)
         db.commit()
         db.refresh(asset)
@@ -263,11 +255,28 @@ def create_app() -> FastAPI:
     return app
 
 
+def _connector_availability() -> dict[str, bool]:
+    return {
+        "crtsh": True,
+        "dns": True,
+        "wappalyzer": True,
+        "tls_audit": True,
+        "whois": True,
+        "security_headers": True,
+        "shodan": settings.shodan_enabled,
+        "nmap": nmap_scan.nmap_available(),
+        "content_discovery": True,
+        "nikto": nikto_scan.nikto_available(),
+        "sqlmap": sqlmap_scan.sqlmap_available(),
+    }
+
+
 def _asset_response(asset: Asset) -> AssetResponse:
     return AssetResponse(
         id=asset.id,
         root_domain=asset.root_domain,
         label=asset.label,
+        authorized_for_active_testing=asset.authorized_for_active_testing,
         created_at=asset.created_at,
         subdomain_count=len(asset.subdomains),
         finding_count=len(asset.findings),

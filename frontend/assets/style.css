@@ -129,7 +129,7 @@ section.view.active { display: block; }
 
 #connector-select {
   background: var(--panel); border: 1px solid var(--line); color: var(--text);
-  border-radius: var(--radius); padding: 6px; font-family: inherit; font-size: 12px; height: 78px;
+  border-radius: var(--radius); padding: 6px; font-family: inherit; font-size: 12px; height: 150px;
 }
 
 .import-row { display: flex; align-items: center; gap: 10px; }
@@ -174,5 +174,14 @@ section.view.active { display: block; }
 }
 .form-row input:focus { outline: none; border-color: var(--signal); }
 .form-error { color: var(--danger); font-size: 12px; margin-top: 10px; min-height: 16px; }
+
+.checkbox-row { margin-bottom: 18px; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
+.checkbox-label input { accent-color: var(--signal); width: 15px; height: 15px; }
+.form-hint { font-size: 11px; color: var(--muted); margin: 6px 0 0 23px; line-height: 1.4; }
+
+.auth-badge { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .03em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); margin-top: 6px; }
+.auth-badge.authorized { color: var(--success); border-color: var(--success); }
+.auth-badge.passive-only { color: var(--muted); }
 
 .hidden { display: none !important; }

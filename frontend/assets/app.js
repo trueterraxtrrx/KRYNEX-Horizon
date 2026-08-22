@@ -5,8 +5,14 @@
     crtsh: "crt.sh (subdomains)",
     dns: "DNS records",
     wappalyzer: "Tech fingerprint",
+    tls_audit: "TLS audit",
+    whois: "WHOIS",
+    security_headers: "Security headers",
     shodan: "Shodan",
-    nmap: "Nmap (live)",
+    nmap: "Nmap (live) [active]",
+    content_discovery: "Content discovery [active]",
+    nikto: "Nikto [active]",
+    sqlmap: "sqlmap [active]",
   };
 
   const state = {
@@ -84,7 +90,7 @@
     select.innerHTML = Object.entries(CONNECTOR_LABELS)
       .map(([key, label]) => {
         const enabled = available[key] !== false;
-        const selected = ["crtsh", "dns", "wappalyzer"].includes(key) ? "selected" : "";
+        const selected = ["crtsh", "dns", "wappalyzer", "tls_audit", "whois", "security_headers"].includes(key) ? "selected" : "";
         return `<option value="${key}" ${selected} ${enabled ? "" : "disabled"}>${label}${enabled ? "" : " (unavailable)"}</option>`;
       })
       .join("");
@@ -113,18 +119,21 @@
 
   async function loadAssets() {
     const tbody = document.querySelector("#assets-table tbody");
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
     try {
       const assets = await api("/assets");
       state.assets = assets;
       if (!assets.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No domains tracked yet. Click "Add Domain" to start.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No domains tracked yet. Click "Add Domain" to start.</td></tr>';
         return;
       }
       tbody.innerHTML = assets.map((a) => `
         <tr data-id="${a.id}">
           <td class="mono">${escapeHtml(a.root_domain)}</td>
           <td>${escapeHtml(a.label || "-")}</td>
+          <td>${a.authorized_for_active_testing
+            ? '<span class="auth-badge authorized">Authorized</span>'
+            : '<span class="auth-badge passive-only">Passive only</span>'}</td>
           <td>${a.subdomain_count}</td>
           <td>${a.finding_count}</td>
           <td>${formatDate(a.created_at)}</td>
@@ -143,7 +152,7 @@
         });
       });
     } catch (error) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load assets: ${escapeHtml(error.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Failed to load assets: ${escapeHtml(error.message)}</td></tr>`;
     }
   }
 
@@ -154,6 +163,9 @@
       const asset = await api(`/assets/${assetId}`);
       document.getElementById("detail-domain").textContent = asset.root_domain;
       document.getElementById("detail-id").textContent = asset.id;
+      document.getElementById("auth-badge-wrap").innerHTML = asset.authorized_for_active_testing
+        ? '<span class="auth-badge authorized">Active testing authorized</span>'
+        : '<span class="auth-badge passive-only">Passive recon only</span>';
     } catch (error) {
       document.getElementById("detail-domain").textContent = "Error loading asset";
     }
@@ -224,6 +236,7 @@
     document.getElementById("add-asset-btn").addEventListener("click", () => {
       document.getElementById("new-domain").value = "";
       document.getElementById("new-label").value = "";
+      document.getElementById("new-authorized").checked = false;
       document.getElementById("create-asset-error").textContent = "";
       modal.classList.remove("hidden");
     });
@@ -233,6 +246,7 @@
     document.getElementById("create-asset-btn").addEventListener("click", async () => {
       const domain = document.getElementById("new-domain").value.trim().toLowerCase();
       const label = document.getElementById("new-label").value.trim();
+      const authorized = document.getElementById("new-authorized").checked;
       const errorEl = document.getElementById("create-asset-error");
       if (!domain || domain.length < 3) {
         errorEl.textContent = "Enter a valid domain.";
@@ -242,7 +256,7 @@
         const asset = await api("/assets", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ root_domain: domain, label: label || null }),
+          body: JSON.stringify({ root_domain: domain, label: label || null, authorized_for_active_testing: authorized }),
         });
         modal.classList.add("hidden");
         await loadAssets();

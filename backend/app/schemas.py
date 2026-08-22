@@ -7,12 +7,17 @@ from pydantic import BaseModel, Field
 class AssetCreate(BaseModel):
     root_domain: str = Field(min_length=3, max_length=255)
     label: str | None = Field(default=None, max_length=255)
+    authorized_for_active_testing: bool = Field(
+        default=False,
+        description="Confirms you have permission to actively scan this target (nmap, content discovery, nikto, sqlmap). Passive recon (crt.sh, DNS, WHOIS, TLS, headers) never requires this.",
+    )
 
 
 class AssetResponse(BaseModel):
     id: str
     root_domain: str
     label: str | None
+    authorized_for_active_testing: bool
     created_at: datetime
     subdomain_count: int = 0
     finding_count: int = 0
@@ -46,8 +51,12 @@ class FindingResponse(BaseModel):
 
 class ScanCreate(BaseModel):
     connectors: list[str] = Field(
-        default_factory=lambda: ["crtsh", "dns", "wappalyzer"],
-        description="Any of: crtsh, dns, wappalyzer, shodan, nmap",
+        default_factory=lambda: ["crtsh", "dns", "wappalyzer", "tls_audit", "whois", "security_headers"],
+        description=(
+            "Passive (no authorization flag needed): crtsh, dns, wappalyzer, shodan, tls_audit, whois, "
+            "security_headers. Active (asset must have authorized_for_active_testing=true): nmap, "
+            "content_discovery, nikto, sqlmap."
+        ),
     )
 
 
