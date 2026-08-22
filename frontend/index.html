@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRYNEX Horizon - Attack Surface Management</title>
+  <link rel="stylesheet" href="/assets-ui/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">KH</div>
+        <div>
+          <h1>KRYNEX Horizon</h1>
+          <p>KRYNEX Labs attack surface</p>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="assets">Assets</button>
+        <button class="nav-item" data-view="detail">Asset Detail</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="status-dot online"></span>
+        <span id="footer-status">API Online</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h2 id="page-title">Tracked Assets</h2>
+        <div class="topbar-actions">
+          <span class="demo-badge">Demo Mode</span>
+          <button id="add-asset-btn" class="btn primary">+ Add Domain</button>
+        </div>
+      </header>
+
+      <!-- Assets list view -->
+      <section id="view-assets" class="view active">
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="card">
+          <h3>Assets</h3>
+          <table class="data-table" id="assets-table">
+            <thead>
+              <tr>
+                <th>Root Domain</th>
+                <th>Label</th>
+                <th>Subdomains</th>
+                <th>Findings</th>
+                <th>Added</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Asset detail view -->
+      <section id="view-detail" class="view">
+        <div class="card">
+          <div class="detail-header">
+            <div>
+              <h3 id="detail-domain">-</h3>
+              <span class="hash-cell" id="detail-id"></span>
+            </div>
+            <div class="topbar-actions">
+              <select id="connector-select" multiple size="1"></select>
+              <button id="run-scan-btn" class="btn primary">Run Scan</button>
+            </div>
+          </div>
+          <div class="import-row">
+            <label class="btn secondary">
+              Import Nmap XML
+              <input type="file" id="nmap-file" hidden accept=".xml">
+            </label>
+            <label class="btn secondary">
+              Import Burp XML
+              <input type="file" id="burp-file" hidden accept=".xml">
+            </label>
+            <span id="import-status"></span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Recent Scans</h3>
+            <div id="scans-list" class="scan-list"></div>
+          </div>
+          <div class="card">
+            <h3>Subdomains</h3>
+            <div id="subdomains-list" class="chip-list"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Findings</h3>
+          <table class="data-table" id="findings-table">
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Title</th>
+                <th>Source</th>
+                <th>Subdomain</th>
+                <th>Found</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add asset modal -->
+  <div id="add-asset-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h3>Track a new domain</h3>
+      <div class="form-row">
+        <label>Root domain</label>
+        <input type="text" id="new-domain" placeholder="example.com">
+      </div>
+      <div class="form-row">
+        <label>Label (optional)</label>
+        <input type="text" id="new-label" placeholder="Production">
+      </div>
+      <button id="create-asset-btn" class="btn primary">Add &amp; Track</button>
+      <div id="create-asset-error" class="form-error"></div>
+    </div>
+  </div>
+
+  <script src="/assets-ui/app.js"></script>
+</body>
+</html>
